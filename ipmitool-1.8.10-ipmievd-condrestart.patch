@@ -1,0 +1,59 @@
+532188 -  ipmievd init script's condrestart doesn't work
+
+Author: Ville Skyttä (ville.skytta@iki.fi)
+Sent upstream as https://sourceforge.net/tracker/?func=detail&aid=2889888&group_id=95200&atid=610552
+
+Initscipt output tuning by Jan Safranek
+
+diff -up ipmitool-1.8.11/contrib/ipmievd.init.redhat.condrestart ipmitool-1.8.11/contrib/ipmievd.init.redhat
+--- contrib/ipmievd.init.redhat.condrestart	2010-06-02 14:33:05.000000000 +0200
++++ contrib/ipmievd.init.redhat	2010-06-02 14:35:49.000000000 +0200
+@@ -44,24 +44,31 @@ test -r $IPMIEVD_CONFIG || { echo "$IPMI
+ . /etc/init.d/functions
+ 
+ start() {
+-	echo "Starting ipmievd:"
++	echo -n "Starting ipmievd:"
+ 	if [ -f /var/lock/subsys/ipmievd ]; then
+ 		return 0
+ 	fi
+ 	daemon $IPMIEVD_BIN $IPMIEVD_OPTIONS
+ 	ret=$?
+ 	[ $ret -eq 0 ] && touch /var/lock/subsys/ipmievd
++	echo
+ 	return $ret
+ }	
+ 
+ stop() {
+-	echo "Shutting down ipmievd:"
++	echo -n "Shutting down ipmievd:"
+ 	killproc $IPMIEVD_BIN
+ 	ret=$?
+ 	[ $ret -eq 0 ] && rm -f /var/lock/subsys/ipmievd
++	echo
+ 	return $ret
+ }
+ 
++restart() {
++	stop
++	start
++}
++
+ case "$1" in
+     start)
+ 	start
+@@ -72,11 +79,10 @@ case "$1" in
+     status)
+ 	status $IPMIEVD_BIN
+ 	;;
+-    restart|reload)
+-    	stop
+-	start
++    restart|reload|force-reload)
++	restart
+ 	;;
+-    condrestart)
++    try-restart|condrestart)
+ 	[ -f /var/lock/subsys/ipmievd ] && restart || :
+ 	;;
+     *)
